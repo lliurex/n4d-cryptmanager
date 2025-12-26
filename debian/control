@@ -1,0 +1,18 @@
+Source: n4d-cryptmanager
+Section: misc
+Priority: optional
+Maintainer: LliureX Team <lliurex@gva.es> 
+Standards-Version: 4.3.0
+Build-Depends: debhelper-compat (= 10), n4d-dev
+Homepage: https://github.com/lliurex/n4d-cryptmanager
+
+Package: n4d-cryptmanager
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, n4d, python3-cryptography
+Description: n4d plugin for cryptography
+ This n4d plugin provides basic management of cryptographic keys, methods
+ to encrypt and decrypt text strings, and the ability to store and retrieve
+ encrypted n4d variables.
+ .
+ The intended use of n4dcryptmanager is to manage and store sensible information
+ in n4d.
