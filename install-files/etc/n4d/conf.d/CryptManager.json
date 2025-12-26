@@ -1,0 +1,39 @@
+{
+    "SETUP": {
+        "type": "python",
+        "path": "CryptManager.py",
+        "class": "CryptManager"
+    },
+    "METHODS": {
+        "create_key": {
+            "allowed_groups": [
+                "sudo",
+                "admins"
+            ]
+        },
+        "encode_text": {
+            "allowed_groups": [
+                "sudo",
+                "admins"
+            ]
+        },
+        "decode_text": {
+            "allowed_groups": [
+                "sudo",
+                "admins"
+            ]
+        },
+        "encode_variable": {
+            "allowed_groups": [
+                "sudo",
+                "admins"
+            ]
+        },
+        "decode_variable": {
+            "allowed_groups": [
+                "sudo",
+                "admins"
+            ]
+        }
+    }
+}
