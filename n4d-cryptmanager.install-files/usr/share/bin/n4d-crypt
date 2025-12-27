@@ -1,0 +1,118 @@
+#! /usr/bin/python3
+
+import xmlrpc.client
+import ssl
+import n4d.responses
+import sys
+import os
+
+
+class N4dCrypt:
+    
+    def __init__(self):
+        
+        self.commands=["decodevar","encodevar","help"]
+        context=ssl._create_unverified_context()
+        self.client=xmlrpc.client.ServerProxy("https://localhost:9779",context=context,allow_none=True)
+        
+    #def __init__
+
+    def usage(self):
+        
+        print("USAGE: n4d-crypt OPTION [PARAMETERS]\n")
+        print("Options:")
+        print("\tdecodevar VAR")
+        print("\tencodevar VAR VALUE\n")
+        
+    #def usage
+    
+    def is_n4d_running(self):
+        
+        try:
+            self.client.get_methods()
+            return True
+        except:
+            return False
+        
+    #def is_n4d_running
+    
+    
+    def parse_input(self,data):
+
+        if len(data) <2 :
+            self.usage()
+        else:
+            if ( data[1] not in self.commands or data[1]=="help" ):
+                self.usage()
+            else:
+                if not self.is_n4d_running():
+                    print("[!] n4d service is not running")
+                    sys.exit(0)
+
+                try:
+                    if data[1]=="decodevar":
+                        self.decodevar(data[2])
+                        
+                    if data[1]=="encodevar":
+                        if len(data) <3 :
+                            self.usage()
+                            sys.exit(0)
+
+                        self.encodevar(data[2], data[3])
+                        
+                except:
+                    pass
+        
+    #def parse_input
+
+    def read_key(self):
+        try:
+            f=open("/etc/n4d/key")
+            key=f.readline().strip()
+            f.close()
+            return key
+        except:
+            return None
+        
+    #def readkey
+    
+    def is_status_ok(self,ret,silent=True):
+        
+        if "status" in ret and ret["status"]==n4d.responses.CALL_SUCCESSFUL:
+            return True
+
+        if not silent:
+            print("[!] Something went wrong:\n%s"%(str(ret)))
+        return False
+        
+    
+    def decodevar(self,vname):
+        
+        ret=self.client.get_variable(vname)
+        if self.is_status_ok(ret,silent=True):
+            print("%s='%s'"%(vname,str(ret["return"])))
+            
+        return -1
+        
+    #def decodevar
+
+    def encodevar(self,vname,value):
+        key=self.read_key()
+        if key==None:
+            print("[!] Error reading n4d key to perform the operation")
+            return -1
+            
+        ret=self.client.set_variable(key,vname,value)
+        if self.is_status_ok(ret):
+            return 0
+            
+        return -1
+        
+    #def encodevar 
+    
+    
+if __name__=="__main__":
+    
+    n4dcrypt=N4dCrypt()
+    n4dcrypt.parse_input(sys.argv)
+    
