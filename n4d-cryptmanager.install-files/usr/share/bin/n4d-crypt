@@ -17,15 +17,20 @@ class N4dCrypt:
         
     #def __init__
 
+    def eprint(self, *args, **kwargs):
+        print(*args, file=sys.stderr, **kwargs)
+
+    #def eprint
+    
     def usage(self):
         
-        print("USAGE: n4d-crypt OPTION [PARAMETERS]\n")
-        print("Options:")
-        print("\tdecodevar VAR")
-        print("\tencodevar VAR VALUE\n")
+        self.eprint("USAGE: n4d-crypt OPTION [PARAMETERS]\n")
+        self.eprint("Options:")
+        self.eprint("\tdecodevar VAR")
+        self.eprint("\tencodevar VAR VALUE\n")
         
     #def usage
-    
+
     def is_n4d_running(self):
         
         try:
@@ -46,7 +51,7 @@ class N4dCrypt:
                 self.usage()
             else:
                 if not self.is_n4d_running():
-                    print("[!] n4d service is not running")
+                    self.eprint("[!] n4d service is not running")
                     sys.exit(0)
 
                 try:
@@ -65,16 +70,34 @@ class N4dCrypt:
         
     #def parse_input
 
-    def read_key(self):
-        try:
-            f=open("/etc/n4d/key")
-            key=f.readline().strip()
-            f.close()
-            return key
-        except:
-            return None
+    def read_key(self, key_file):
+        f=open(key_file)
+        key_data=f.readline().strip()
+        f.close()
+        return key_data
         
     #def readkey
+    
+    def get_credentials(self):
+
+        user=os.environ["USER"]
+        try:
+            if user != 'root' :
+                ret=self.client.create_ticket(user)
+
+                if self.is_status_ok(ret,silent=True):
+                    key = self.read_key("/run/n4d/tickets/%s"%user)
+                    return (user,key)
+
+            else:
+                key = self.read_key("/etc/n4d/key")
+                return key
+
+        except:
+            self.eprint("[!] Error reading n4d key to perform the operation")
+            sys.exit(0)
+            
+    #def get_credentials
     
     def is_status_ok(self,ret,silent=True):
         
@@ -82,29 +105,23 @@ class N4dCrypt:
             return True
 
         if not silent:
-            print("[!] Something went wrong:\n%s"%(str(ret)))
+            self.eprint("[!] Something went wrong:\n%s"%(str(ret)))
         return False
         
     
     def decodevar(self,vname):
-        
-        ret=self.client.get_variable(vname)
-        if self.is_status_ok(ret,silent=True):
-            print("%s='%s'"%(vname,str(ret["return"])))
+        ret=self.client.decode_variable(self.get_credentials(),"CryptManager",vname)
+        if self.is_status_ok(ret,silent=False):
+            print(str(ret["return"]))
             
         return -1
         
     #def decodevar
 
     def encodevar(self,vname,value):
-        key=self.read_key()
-        if key==None:
-            print("[!] Error reading n4d key to perform the operation")
-            return -1
-            
-        ret=self.client.set_variable(key,vname,value)
-        if self.is_status_ok(ret):
-            return 0
+        ret=self.client.encode_variable(self.get_credentials(),"CryptManager",vname, value)
+        if self.is_status_ok(ret,silent=False):
+            print(str(ret["return"]))
             
         return -1
         
